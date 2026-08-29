@@ -94,7 +94,7 @@ public class SecurityConfig {
                                 securityErrorResponseWriter.write(
                                         request, response, HttpStatus.FORBIDDEN, "Access denied")))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                    auth.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
                             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll();
                     if (h2ConsoleEnabled) {
                         auth.requestMatchers("/h2-console/**").permitAll();
