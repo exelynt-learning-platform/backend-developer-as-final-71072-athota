@@ -62,23 +62,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // ── CSRF DESIGN DECISION ─────────────────────────────────────────────────
-                // CSRF attacks exploit the browser's automatic inclusion of session cookies
-                // on cross-origin requests. This API issues NO cookies of any kind:
-                //   • Authentication is performed solely via Authorization: Bearer <JWT>
-                //   • Sessions are stateless (SessionCreationPolicy.STATELESS)
-                //   • No Set-Cookie headers are ever returned
-                //
-                // Because there is no browser-managed credential for an attacker to replay,
-                // CSRF protection is architecturally inapplicable here. Disabling it also
-                // allows standard REST clients (curl, Postman, fetch with Authorization header)
-                // to interact without needing to obtain and forward a CSRF token.
-                //
-                // Compensating controls in place:
-                //   • All state-changing endpoints require a valid, short-lived JWT.
-                //   • CORS is restricted to configured origins (CORS_ALLOWED_ORIGINS env var).
-                //   • If cookie-based auth is ever introduced, CSRF MUST be re-enabled.
-                // ─────────────────────────────────────────────────────────────────────────
+                // Authentication is stateless and accepted only through bearer headers, never cookies.
+                // CSRF tokens protect browser cookie sessions, so they do not apply to this API.
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> {
                     if (h2ConsoleEnabled) {
@@ -94,7 +79,7 @@ public class SecurityConfig {
                                 securityErrorResponseWriter.write(
                                         request, response, HttpStatus.FORBIDDEN, "Access denied")))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+                    auth.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll();
                     if (h2ConsoleEnabled) {
                         auth.requestMatchers("/h2-console/**").permitAll();
@@ -119,7 +104,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Auth-Token", "Accept"));
         configuration.setExposedHeaders(List.of("Authorization", "X-Auth-Token"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

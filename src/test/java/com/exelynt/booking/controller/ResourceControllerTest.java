@@ -139,12 +139,11 @@ public class ResourceControllerTest {
     }
 
     @Test
-    @DisplayName("Unauthenticated state-changing requests are rejected with 401")
+    @DisplayName("Unauthenticated state-changing requests are rejected")
     void createResourceWithoutBearerToken_isRejected() throws Exception {
         ResourceRequest request = new ResourceRequest(
-                "Unauth test room", "Request without any authentication", "ROOM", new BigDecimal("50.00"), true);
+                "CSRF test room", "Request without bearer authentication", "ROOM", new BigDecimal("50.00"), true);
 
-        // This API uses stateless JWT-only auth. No token = 401 Unauthorized.
         mockMvc.perform(post("/resources")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

@@ -20,10 +20,6 @@ import java.time.LocalDateTime;
 
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
-/**
- * Development/test seed data. Spring does not create this bean when app.seed.enabled is false,
- * so production startup performs no seed-data reads or writes.
- */
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
@@ -115,12 +111,10 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedReservations(Resource confRoomA, Resource teslaCar, Resource projector4k) {
-        User regularUser = userRepository.findByUsername("user").orElse(null);
-        User johnDoe = userRepository.findByUsername("johndoe").orElse(null);
-
-        if (regularUser == null || johnDoe == null) {
-            return;
-        }
+        User regularUser = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        User johnDoe = userRepository.findByUsername("johndoe")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'johndoe' not found"));
 
         LocalDateTime now = LocalDateTime.now();
 

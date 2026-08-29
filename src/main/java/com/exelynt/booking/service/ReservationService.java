@@ -15,8 +15,8 @@ import com.exelynt.booking.exception.UnauthorizedException;
 import com.exelynt.booking.repository.ReservationRepository;
 import com.exelynt.booking.repository.ResourceRepository;
 import com.exelynt.booking.repository.UserRepository;
-import com.exelynt.booking.security.ReservationAccessPolicy;
 import com.exelynt.booking.security.UserPrincipal;
+import com.exelynt.booking.security.ReservationAccessPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +31,9 @@ import java.util.List;
 
 @Service
 public class ReservationService {
+
+    private static final long ALLOWED_START_TIME_SKEW_MINUTES = 5;
+    private static final double MINUTES_PER_HOUR = 60.0;
 
     private final ReservationRepository reservationRepository;
     private final ResourceRepository resourceRepository;
@@ -133,7 +136,7 @@ public class ReservationService {
         if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
             throw new BadRequestException("Start time must be strictly before end time");
         }
-        if (startTime.isBefore(LocalDateTime.now().minusMinutes(ReservationConstants.ALLOWED_START_TIME_SKEW_MINUTES))) {
+        if (startTime.isBefore(LocalDateTime.now().minusMinutes(ALLOWED_START_TIME_SKEW_MINUTES))) {
             throw new BadRequestException("Reservation start time cannot be in the past");
         }
     }
@@ -149,15 +152,14 @@ public class ReservationService {
     }
 
     /**
-     * Computes the booking price using pure {@link BigDecimal} arithmetic to avoid
-     * floating-point precision errors. Duration is rounded up to the nearest hour,
-     * with a minimum of {@link ReservationConstants#MINIMUM_HOURS} billable hour.
+     * Calculates reservation price proportionally based on the resource rate and duration in minutes.
+     * Fractional hours are billed proportionally.
      */
     private BigDecimal calculateReservationPrice(BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
-        BigDecimal minutes = BigDecimal.valueOf(Duration.between(start, end).toMinutes());
-        BigDecimal hours = minutes.divide(ReservationConstants.MINUTES_PER_HOUR, 10, RoundingMode.HALF_UP);
-        BigDecimal billableHours = hours.max(ReservationConstants.MINIMUM_HOURS);
-        return pricePerUnit.multiply(billableHours).setScale(2, RoundingMode.HALF_UP);
+        long minutes = Duration.between(start, end).toMinutes();
+        BigDecimal hours = BigDecimal.valueOf(minutes)
+                .divide(BigDecimal.valueOf(MINUTES_PER_HOUR), 4, RoundingMode.HALF_UP);
+        return pricePerUnit.multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
     private Reservation findReservationOrThrow(Long id) {

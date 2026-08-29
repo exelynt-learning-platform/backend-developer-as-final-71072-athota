@@ -2,7 +2,6 @@ package com.exelynt.booking.controller;
 
 import com.exelynt.booking.dto.AuthResponse;
 import com.exelynt.booking.dto.LoginRequest;
-import com.exelynt.booking.dto.RegisterRequest;
 import com.exelynt.booking.dto.UserProfileResponse;
 import com.exelynt.booking.security.UserPrincipal;
 import com.exelynt.booking.service.AuthService;
@@ -21,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication", description = "Endpoints for user registration, JWT login authentication, and profile introspection")
+@Tag(name = "Authentication", description = "Endpoints for JWT login authentication and profile introspection")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,13 +35,6 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         AuthResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/register")
-    @Operation(summary = "Register a new standard user account (ROLE_USER)")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        AuthResponse response = authService.register(registerRequest);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/me")
