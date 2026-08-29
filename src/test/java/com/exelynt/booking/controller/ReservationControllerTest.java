@@ -91,6 +91,16 @@ public class ReservationControllerTest {
     }
 
     @Test
+    @DisplayName("GET /reservations - Caps oversized page requests")
+    void getReservations_whenPageSizeExceedsLimit_capsAtConfiguredMaximum() throws Exception {
+        mockMvc.perform(get("/reservations")
+                        .param("size", "1000")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageSize").value(100));
+    }
+
+    @Test
     @DisplayName("PUT /reservations/{id}/status - USER can cancel their own reservation")
     void testUserCanCancelReservation() throws Exception {
         ReservationStatusUpdateRequest cancelReq = new ReservationStatusUpdateRequest(ReservationStatus.CANCELLED);

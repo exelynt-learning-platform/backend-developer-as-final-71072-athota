@@ -13,6 +13,11 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
 
 app:
   seed:

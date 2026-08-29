@@ -1,6 +1,7 @@
 package com.exelynt.booking.config;
 
 import com.exelynt.booking.security.JwtAuthenticationFilter;
+import com.exelynt.booking.security.SecurityErrorResponseWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,12 +34,15 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final SecurityErrorResponseWriter securityErrorResponseWriter;
     private final boolean h2ConsoleEnabled;
 
     @Autowired
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          SecurityErrorResponseWriter securityErrorResponseWriter,
                           @Value("${app.h2-console.enabled:false}") boolean h2ConsoleEnabled) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.securityErrorResponseWriter = securityErrorResponseWriter;
         this.h2ConsoleEnabled = h2ConsoleEnabled;
     }
 
@@ -67,9 +71,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
-                                response.sendError(HttpStatus.UNAUTHORIZED.value(), "Authentication is required"))
+                                securityErrorResponseWriter.write(
+                                        request, response, HttpStatus.UNAUTHORIZED, "Authentication is required"))
                         .accessDeniedHandler((request, response, exception) ->
-                                response.sendError(HttpStatus.FORBIDDEN.value(), "Access denied")))
+                                securityErrorResponseWriter.write(
+                                        request, response, HttpStatus.FORBIDDEN, "Access denied")))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll();

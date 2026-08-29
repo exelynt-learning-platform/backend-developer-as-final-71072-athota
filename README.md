@@ -128,6 +128,10 @@ Once started, the application will be accessible at `http://localhost:8080`.
 
 Seed users and sample reservations are enabled only with the `dev` profile. They remain disabled for MySQL and PostgreSQL deployments unless `APP_SEED_ENABLED=true` is explicitly set.
 
+Pagination defaults to 10 items and is capped at 100 items per request to protect the API from oversized list queries.
+
+The test suite includes a PostgreSQL Testcontainers integration test for reservation-conflict queries. It runs automatically when Docker is available and is skipped locally when it is not.
+
 ---
 
 ## Database Configuration
