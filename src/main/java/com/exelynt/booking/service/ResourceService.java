@@ -70,7 +70,7 @@ public class ResourceService {
         resourceRepository.delete(resource);
     }
 
-    public Resource findResourceOrThrow(Long id) {
+    private Resource findResourceOrThrow(Long id) {
         return resourceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource with ID " + id + " not found"));
     }

@@ -7,10 +7,8 @@ import com.exelynt.booking.dto.ReservationStatusUpdateRequest;
 import com.exelynt.booking.entity.Reservation;
 import com.exelynt.booking.entity.ReservationStatus;
 import com.exelynt.booking.entity.Resource;
-import com.exelynt.booking.entity.Role;
 import com.exelynt.booking.entity.User;
 import com.exelynt.booking.exception.BadRequestException;
-import com.exelynt.booking.exception.ForbiddenException;
 import com.exelynt.booking.exception.ResourceConflictException;
 import com.exelynt.booking.exception.ResourceNotFoundException;
 import com.exelynt.booking.exception.UnauthorizedException;
@@ -18,6 +16,7 @@ import com.exelynt.booking.repository.ReservationRepository;
 import com.exelynt.booking.repository.ResourceRepository;
 import com.exelynt.booking.repository.UserRepository;
 import com.exelynt.booking.security.UserPrincipal;
+import com.exelynt.booking.security.ReservationAccessPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,14 +35,17 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final ReservationAccessPolicy accessPolicy;
 
     @Autowired
     public ReservationService(ReservationRepository reservationRepository,
                               ResourceRepository resourceRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              ReservationAccessPolicy accessPolicy) {
         this.reservationRepository = reservationRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
+        this.accessPolicy = accessPolicy;
     }
 
     @Transactional
@@ -90,7 +92,7 @@ public class ReservationService {
             Pageable pageable,
             UserPrincipal currentUser) {
 
-        User userFilter = determineUserFilter(currentUser);
+        User userFilter = accessPolicy.reservationOwnerFilter(currentUser);
         Page<Reservation> reservationPage = reservationRepository.findFilteredReservations(
                 userFilter, status, minPrice, maxPrice, pageable);
 
@@ -100,7 +102,7 @@ public class ReservationService {
     @Transactional(readOnly = true)
     public ReservationResponse getReservationById(Long id, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
-        validateOwnershipOrAdmin(reservation, currentUser, "view");
+        accessPolicy.requireOwnerOrAdmin(reservation, currentUser, "view");
         return ReservationResponse.fromEntity(reservation);
     }
 
@@ -108,8 +110,8 @@ public class ReservationService {
     public ReservationResponse updateReservationStatus(Long id, ReservationStatusUpdateRequest request, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
 
-        if (!isAdmin(currentUser)) {
-            validateOwnershipOrAdmin(reservation, currentUser, "update");
+        if (!accessPolicy.isAdmin(currentUser)) {
+            accessPolicy.requireOwnerOrAdmin(reservation, currentUser, "update");
             if (request.getStatus() != ReservationStatus.CANCELLED) {
                 throw new BadRequestException("Regular users can only set status to CANCELLED");
             }
@@ -123,7 +125,7 @@ public class ReservationService {
     @Transactional
     public void deleteReservation(Long id, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
-        validateOwnershipOrAdmin(reservation, currentUser, "delete");
+        accessPolicy.requireOwnerOrAdmin(reservation, currentUser, "delete");
         reservationRepository.delete(reservation);
     }
 
@@ -149,25 +151,6 @@ public class ReservationService {
         long minutes = Duration.between(start, end).toMinutes();
         double hours = Math.max(1.0, (double) minutes / 60.0);
         return pricePerUnit.multiply(BigDecimal.valueOf(hours)).setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private boolean isAdmin(UserPrincipal user) {
-        return user.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
-    }
-
-    private void validateOwnershipOrAdmin(Reservation reservation, UserPrincipal currentUser, String action) {
-        if (!isAdmin(currentUser) && !reservation.getUser().getId().equals(currentUser.getId())) {
-            throw new ForbiddenException("Access denied: you can only " + action + " your own reservations");
-        }
-    }
-
-    private User determineUserFilter(UserPrincipal currentUser) {
-        if (isAdmin(currentUser)) {
-            return null; // Admin sees all
-        }
-        return userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
     }
 
     private Reservation findReservationOrThrow(Long id) {

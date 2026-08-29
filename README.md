@@ -9,7 +9,7 @@ A secure, production-ready RESTful API for managing resource reservations with J
 The system allows users to view available resources (e.g., meeting rooms, company vehicles, specialized equipment) and manage their own reservations. Administrators have full access to manage resources and oversee all reservations across the platform.
 
 ### Key Features
-- **JWT-Based Authentication**: Stateless authentication with bearer tokens via `POST /auth/login` and `POST /auth/register`.
+- **JWT-Based Authentication**: Stateless authentication with bearer tokens via `POST /auth/login`.
 - **Role-Based Access Control (RBAC)**: Distinct permissions for `ROLE_ADMIN` and `ROLE_USER`.
 - **User Identity Isolation**: User identity is extracted directly from the verified JWT security context, preventing client-side spoofing.
 - **Resource Management**: Admins have full CRUD access; regular users have read-only access.
@@ -164,7 +164,6 @@ mvn spring-boot:run -Dspring-boot.run.profiles=postgres
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/login` | Log in with username/email and password to get a JWT Bearer token | No |
-| `POST` | `/auth/register` | Register a new standard user (`ROLE_USER` only) | No |
 | `GET` | `/auth/me` | Retrieve profile of the currently authenticated user | Yes |
 
 ### 2. Resources (`/resources`)

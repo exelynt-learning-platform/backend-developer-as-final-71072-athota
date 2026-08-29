@@ -1,7 +1,6 @@
 package com.exelynt.booking.controller;
 
 import com.exelynt.booking.dto.LoginRequest;
-import com.exelynt.booking.dto.RegisterRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -66,21 +66,10 @@ public class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /auth/register - Success creating new user")
-    void testRegisterSuccess() throws Exception {
-        String uniqueUser = "testuser_" + System.currentTimeMillis();
-        RegisterRequest registerRequest = new RegisterRequest(
-                uniqueUser,
-                uniqueUser + "@test.com",
-                "Password123!"
-        );
-
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").isString())
-                .andExpect(jsonPath("$.username").value(uniqueUser))
-                .andExpect(jsonPath("$.role").value("ROLE_USER"));
+    @DisplayName("GET /auth/me - Requires a valid JWT")
+    void testCurrentUserRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/auth/me"))
+                .andExpect(status().isUnauthorized());
     }
+
 }
