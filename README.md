@@ -17,7 +17,7 @@ The system allows users to view available resources (e.g., meeting rooms, compan
 - **Conflict Prevention**: Validates overlapping reservations for the same resource to prevent double-booking.
 - **Decimal Pricing**: Prices are stored and calculated using `BigDecimal` with 2 decimal places.
 - **Multi-Criteria Filtering & Pagination**: Filter reservations by `status`, `minPrice`, and `maxPrice`, with built-in pagination (`page`, `size`) and sorting (`sort`).
-- **Database Support**: Zero-configuration default in-memory H2 database for testing, plus ready-to-use profiles for MySQL and PostgreSQL.
+- **Database Support**: In-memory H2 for local development, plus ready-to-use profiles for MySQL and PostgreSQL. The H2 console is available only with the `dev` profile.
 - **API Documentation**: Interactive Swagger/OpenAPI documentation and an exported Postman collection.
 - **Automated Test Suite**: Unit and integration tests covering authentication, RBAC, CRUD operations, and validation.
 
@@ -110,15 +110,17 @@ mvn clean test
 ### 3. Run Application
 
 ```bash
-# Run with default in-memory H2 database (Zero setup required)
-mvn spring-boot:run
+# Set a Base64-encoded secret with at least 32 bytes, then run locally with H2.
+# PowerShell: $env:JWT_SECRET = '<base64-secret>'
+export JWT_SECRET='<base64-secret>'
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 Once started, the application will be accessible at `http://localhost:8080`.
 
 - **Swagger UI**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 - **OpenAPI JSON Spec**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
-- **H2 Database Console**: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
+- **H2 Database Console** (development profile only): [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
   - JDBC URL: `jdbc:h2:mem:bookingdb`
   - Username: `sa`
   - Password: *(leave blank)*
@@ -162,7 +164,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=postgres
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/login` | Log in with username/email and password to get a JWT Bearer token | No |
-| `POST` | `/auth/register` | Register a new user (`ROLE_USER` or `ROLE_ADMIN`) | No |
+| `POST` | `/auth/register` | Register a new standard user (`ROLE_USER` only) | No |
 | `GET` | `/auth/me` | Retrieve profile of the currently authenticated user | Yes |
 
 ### 2. Resources (`/resources`)

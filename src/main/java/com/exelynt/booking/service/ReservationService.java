@@ -51,7 +51,9 @@ public class ReservationService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
 
-        Resource resource = resourceRepository.findById(request.getResourceId())
+        // Lock the resource before checking availability and overlap. This keeps competing
+        // booking requests for the same resource in a single transaction at a time.
+        Resource resource = resourceRepository.findByIdForUpdate(request.getResourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource with ID " + request.getResourceId() + " not found"));
 
         if (Boolean.FALSE.equals(resource.getAvailable())) {

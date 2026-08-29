@@ -2,6 +2,7 @@ package com.exelynt.booking.config;
 
 import com.exelynt.booking.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,10 +32,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final boolean h2ConsoleEnabled;
 
     @Autowired
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          @Value("${app.h2-console.enabled:false}") boolean h2ConsoleEnabled) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.h2ConsoleEnabled = h2ConsoleEnabled;
     }
 
     @Bean
@@ -52,23 +56,25 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .headers(headers -> {
+                    if (h2ConsoleEnabled) {
+                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
+                    }
+                })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/resources/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/resources/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/resources/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/resources/**").hasRole("ADMIN")
-
-                        .requestMatchers("/reservations/**").authenticated()
-
-                        .anyRequest().authenticated()
-                );
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/auth/**").permitAll()
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll();
+                    if (h2ConsoleEnabled) {
+                        auth.requestMatchers("/h2-console/**").permitAll();
+                    }
+                    auth.requestMatchers(HttpMethod.GET, "/resources/**").authenticated()
+                            .requestMatchers(HttpMethod.POST, "/resources/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.PUT, "/resources/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/resources/**").hasRole("ADMIN")
+                            .requestMatchers("/reservations/**").authenticated()
+                            .anyRequest().authenticated();
+                });
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
