@@ -62,12 +62,23 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // This API is fully stateless. Every request is authenticated via a short-lived JWT
-                // supplied in the Authorization: Bearer header — no cookies, no sessions.
-                // CSRF protection exists to stop browsers from silently replaying cookie-based
-                // credentials on state-changing requests. Because no session cookies are ever issued
-                // here, there is no credential for a forged cross-origin request to replay, making
-                // CSRF mitigation inapplicable to this architecture.
+                // ── CSRF DESIGN DECISION ─────────────────────────────────────────────────
+                // CSRF attacks exploit the browser's automatic inclusion of session cookies
+                // on cross-origin requests. This API issues NO cookies of any kind:
+                //   • Authentication is performed solely via Authorization: Bearer <JWT>
+                //   • Sessions are stateless (SessionCreationPolicy.STATELESS)
+                //   • No Set-Cookie headers are ever returned
+                //
+                // Because there is no browser-managed credential for an attacker to replay,
+                // CSRF protection is architecturally inapplicable here. Disabling it also
+                // allows standard REST clients (curl, Postman, fetch with Authorization header)
+                // to interact without needing to obtain and forward a CSRF token.
+                //
+                // Compensating controls in place:
+                //   • All state-changing endpoints require a valid, short-lived JWT.
+                //   • CORS is restricted to configured origins (CORS_ALLOWED_ORIGINS env var).
+                //   • If cookie-based auth is ever introduced, CSRF MUST be re-enabled.
+                // ─────────────────────────────────────────────────────────────────────────
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> {
                     if (h2ConsoleEnabled) {
