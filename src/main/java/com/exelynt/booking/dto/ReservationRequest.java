@@ -1,9 +1,7 @@
 package com.exelynt.booking.dto;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class ReservationRequest {
@@ -18,19 +16,15 @@ public class ReservationRequest {
     @NotNull(message = "End time is required")
     private LocalDateTime endTime;
 
-    @DecimalMin(value = "0.00", inclusive = false, message = "Price must be greater than zero if provided")
-    private BigDecimal price; // Optional: calculated from resource rate if omitted
-
     private String notes;
 
     public ReservationRequest() {
     }
 
-    public ReservationRequest(Long resourceId, LocalDateTime startTime, LocalDateTime endTime, BigDecimal price, String notes) {
+    public ReservationRequest(Long resourceId, LocalDateTime startTime, LocalDateTime endTime, String notes) {
         this.resourceId = resourceId;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.price = price;
         this.notes = notes;
     }
 
@@ -56,14 +50,6 @@ public class ReservationRequest {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
     }
 
     public String getNotes() {

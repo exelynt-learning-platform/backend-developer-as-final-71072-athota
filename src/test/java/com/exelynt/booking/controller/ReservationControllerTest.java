@@ -60,7 +60,6 @@ public class ReservationControllerTest {
                 1L,
                 start,
                 end,
-                new BigDecimal("300.00"),
                 "Product strategy discussion"
         );
 

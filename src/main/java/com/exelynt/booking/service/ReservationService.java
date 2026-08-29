@@ -88,19 +88,9 @@ public class ReservationService {
             Pageable pageable,
             UserPrincipal currentUser) {
 
-        User userFilter = null;
-        if (!isAdmin(currentUser)) {
-            userFilter = userRepository.findById(currentUser.getId())
-                    .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
-        }
-
+        User userFilter = determineUserFilter(currentUser);
         Page<Reservation> reservationPage = reservationRepository.findFilteredReservations(
-                userFilter,
-                status,
-                minPrice,
-                maxPrice,
-                pageable
-        );
+                userFilter, status, minPrice, maxPrice, pageable);
 
         return PageResponse.fromPage(reservationPage.map(ReservationResponse::fromEntity));
     }
@@ -168,6 +158,14 @@ public class ReservationService {
         if (!isAdmin(currentUser) && !reservation.getUser().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("Access denied: you can only " + action + " your own reservations");
         }
+    }
+
+    private User determineUserFilter(UserPrincipal currentUser) {
+        if (isAdmin(currentUser)) {
+            return null; // Admin sees all
+        }
+        return userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
     }
 
     private Reservation findReservationOrThrow(Long id) {

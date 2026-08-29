@@ -37,9 +37,18 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    private final java.util.Map<String, Long> registrationCache = new java.util.concurrent.ConcurrentHashMap<>();
+
     @PostMapping("/register")
     @Operation(summary = "Register a new standard user account (ROLE_USER only)")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest, jakarta.servlet.http.HttpServletRequest request) {
+        String clientIp = request.getRemoteAddr();
+        long now = System.currentTimeMillis();
+        if (registrationCache.containsKey(clientIp) && (now - registrationCache.get(clientIp)) < 60000) {
+            throw new com.exelynt.booking.exception.BadRequestException("Too many registration attempts. Please wait a minute.");
+        }
+        registrationCache.put(clientIp, now);
+        
         AuthResponse response = authService.register(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
