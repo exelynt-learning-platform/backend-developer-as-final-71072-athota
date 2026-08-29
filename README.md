@@ -1,117 +1,147 @@
-<p align="center">
-  <img src="./assets/hero.svg" width="100%" alt="Resource Booking API Banner">
-</p>
+# Resource Booking System - RESTful API
 
-<p align="center">
-  <img alt="Java 17+" src="https://img.shields.io/badge/JAVA-17%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white">
-  <img alt="Spring Boot 3" src="https://img.shields.io/badge/SPRING%20BOOT-3.2.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
-  <img alt="Spring Security 6" src="https://img.shields.io/badge/SPRING%20SECURITY-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white">
-  <img alt="Swagger OpenAPI" src="https://img.shields.io/badge/SWAGGER-OPENAPI%203-85EA2D?style=for-the-badge&logo=swagger&logoColor=black">
-  <a href="./LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/LICENSE-MIT-8b949e?style=for-the-badge"></a>
-</p>
-
-<p align="center">
-  <strong>Secure RESTful API for Resource Booking with JWT Authentication and Role-Based Access Control</strong><br>
-  Built with Spring Boot 3, Java 17+, Spring Security 6, JWT, Spring Data JPA, and multi-database support (MySQL, PostgreSQL, and H2).
-</p>
+A secure, production-ready RESTful API for managing resource reservations with JWT authentication and Role-Based Access Control (RBAC), built using Spring Boot, Java 17+, Spring Security, and Spring Data JPA.
 
 ---
 
-## Architecture & Security Signal Flow
+## Overview
 
-<p align="center">
-  <img src="./assets/architecture.svg" width="100%" alt="Architecture Signal Flow">
-</p>
+The system allows users to view available resources (e.g., meeting rooms, company vehicles, specialized equipment) and manage their own reservations. Administrators have full access to manage resources and oversee all reservations across the platform.
 
-The system strictly enforces **Role-Based Access Control (RBAC)** across all endpoints:
-- **USER Identity Isolation:** User identity is derived strictly from the verified JWT security context, preventing client-side spoofing during reservation creation.
-- **Conflict Prevention:** Automated schedule overlap validation prevents double-booking of resources during the same time interval.
-- **Precise Decimal Pricing:** All monetary values and hourly rates are computed and stored as precise `BigDecimal` values.
+### Key Features
+- **JWT-Based Authentication**: Stateless authentication with bearer tokens via `POST /auth/login` and `POST /auth/register`.
+- **Role-Based Access Control (RBAC)**: Distinct permissions for `ROLE_ADMIN` and `ROLE_USER`.
+- **User Identity Isolation**: User identity is extracted directly from the verified JWT security context, preventing client-side spoofing.
+- **Resource Management**: Admins have full CRUD access; regular users have read-only access.
+- **Reservation Lifecycle**: Supports `PENDING`, `CONFIRMED`, and `CANCELLED` statuses. Users can cancel their own reservations.
+- **Conflict Prevention**: Validates overlapping reservations for the same resource to prevent double-booking.
+- **Decimal Pricing**: Prices are stored and calculated using `BigDecimal` with 2 decimal places.
+- **Multi-Criteria Filtering & Pagination**: Filter reservations by `status`, `minPrice`, and `maxPrice`, with built-in pagination (`page`, `size`) and sorting (`sort`).
+- **Database Support**: Zero-configuration default in-memory H2 database for testing, plus ready-to-use profiles for MySQL and PostgreSQL.
+- **API Documentation**: Interactive Swagger/OpenAPI documentation and an exported Postman collection.
+- **Automated Test Suite**: Unit and integration tests covering authentication, RBAC, CRUD operations, and validation.
 
-## Core Capabilities
+---
 
-<table>
-  <tr>
-    <td width="50%">
-      <strong>JWT Authentication &amp; RBAC</strong><br>
-      Stateless authentication via <code>POST /auth/login</code>. Granular access controls for <code>ROLE_ADMIN</code> and <code>ROLE_USER</code>.
-    </td>
-    <td width="50%">
-      <strong>Resource Management</strong><br>
-      Admins have full CRUD control over resources (Rooms, Vehicles, Equipment). Regular users have read-only browsing access.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <strong>Filtered Reservations</strong><br>
-      Search reservations by status (<code>PENDING</code>, <code>CONFIRMED</code>, <code>CANCELLED</code>), <code>minPrice</code>, and <code>maxPrice</code>.
-    </td>
-    <td width="50%">
-      <strong>Pagination &amp; Dynamic Sorting</strong><br>
-      Spring Data Pageable integration supporting <code>page</code>, <code>size</code>, and custom <code>sort</code> parameters.
-    </td>
-  </tr>
-</table>
+## Technology Stack
 
-## Seed Users for Testing
+- **Language**: Java 17 / Java 21
+- **Framework**: Spring Boot 3.2.3
+- **Security**: Spring Security 6, JJWT 0.12.5 (HMAC-SHA256)
+- **Persistence**: Spring Data JPA, Hibernate ORM
+- **Database**: H2 (In-Memory default), MySQL 8.0, PostgreSQL 15
+- **API Docs**: SpringDoc OpenAPI 3 / Swagger UI 2.3.0
+- **Build Tool**: Maven 3.8+ / Maven Wrapper
+- **Testing**: JUnit 5, MockMvc, Spring Security Test
 
-The system automatically initializes test accounts on startup:
+---
 
-| Username | Email | Password | Assigned Role | Capabilities |
+## Project Structure
+
+```
+backend-developer-as-final-71072-athota/
+├── pom.xml
+├── README.md
+├── LICENSE
+├── docs/
+│   └── Resource_Booking_API.postman_collection.json
+├── src/
+│   ├── main/
+│   │   ├── java/com/exelynt/booking/
+│   │   │   ├── BookingApplication.java
+│   │   │   ├── config/
+│   │   │   │   ├── DataInitializer.java        # Seeds test users & resources
+│   │   │   │   ├── OpenApiConfig.java          # Swagger OpenAPI setup
+│   │   │   │   └── SecurityConfig.java         # Spring Security & RBAC rules
+│   │   │   ├── controller/
+│   │   │   │   ├── AuthController.java         # Login, register, me
+│   │   │   │   ├── ReservationController.java  # Booking CRUD & filters
+│   │   │   │   └── ResourceController.java     # Resource management
+│   │   │   ├── dto/                            # Request & Response payloads
+│   │   │   ├── entity/                         # User, Resource, Reservation
+│   │   │   ├── exception/                      # Global exception handlers
+│   │   │   ├── repository/                     # Spring Data JPA repositories
+│   │   │   ├── security/                       # JWT filter, token provider, principal
+│   │   │   └── service/                        # Business logic & validations
+│   │   └── resources/
+│   │       ├── application.yml                 # Default configuration (H2)
+│   │       ├── application-mysql.yml           # MySQL profile
+│   │       └── application-postgres.yml        # PostgreSQL profile
+│   └── test/
+│       └── java/com/exelynt/booking/
+│           ├── BookingApplicationTests.java
+│           └── controller/
+│               ├── AuthControllerTest.java
+│               ├── ReservationControllerTest.java
+│               └── ResourceControllerTest.java
+```
+
+---
+
+## Seed Data for Testing
+
+When the application starts, test accounts and initial data are automatically created:
+
+| Role | Username | Email | Password | Permissions |
 | :--- | :--- | :--- | :--- | :--- |
-| **`admin`** | `admin@booking.com` | `Admin@123` | `ROLE_ADMIN` | Full CRUD on Resources &amp; Reservations |
-| **`user`** | `user@booking.com` | `User@123` | `ROLE_USER` | Read Resources, Create &amp; Manage Own Reservations |
-| **`johndoe`** | `john@booking.com` | `Password@123` | `ROLE_USER` | Regular User Account |
+| **ADMIN** | `admin` | `admin@booking.com` | `Admin@123` | Full CRUD on resources & all reservations |
+| **USER** | `user` | `user@booking.com` | `User@123` | View resources, manage own reservations |
+| **USER** | `johndoe` | `john@booking.com` | `Password@123` | View resources, manage own reservations |
 
 ---
 
-## Quickstart & Installation
+## Getting Started
 
 ### 1. Prerequisites
-- **Java 17+** (or Java 21)
-- **Maven 3.8+** (or use included wrapper)
+- Java Development Kit (JDK) 17 or higher
+- Maven 3.8+ (or use `./mvnw` / `mvnw.cmd`)
 
-### 2. Clone & Build
+### 2. Build & Test
 
 ```bash
-# Clone the repository
+# Clone the repository and checkout the assignment branch
 git clone -b backend-developer-assignment-deadline-30th-sep-2026-64051-2702 https://github.com/exelynt-learning-platform/backend-developer-as-final-71072-athota.git
 cd backend-developer-as-final-71072-athota
 
-# Run tests and verify build
+# Run automated tests
 mvn clean test
+```
 
-# Run application locally (In-memory H2 database with seed data)
+### 3. Run Application
+
+```bash
+# Run with default in-memory H2 database (Zero setup required)
 mvn spring-boot:run
 ```
 
-> [!NOTE]
-> The default profile runs with an in-memory **H2 Database** and pre-seeded test data, allowing immediate zero-configuration execution and testing.
-> - **Swagger UI Documentation:** `http://localhost:8080/swagger-ui/index.html`
-> - **OpenAPI JSON Spec:** `http://localhost:8080/v3/api-docs`
-> - **H2 Database Console:** `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:bookingdb`, Username: `sa`, Password: empty)
+Once started, the application will be accessible at `http://localhost:8080`.
+
+- **Swagger UI**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+- **OpenAPI JSON Spec**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **H2 Database Console**: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
+  - JDBC URL: `jdbc:h2:mem:bookingdb`
+  - Username: `sa`
+  - Password: *(leave blank)*
 
 ---
 
 ## Database Configuration
 
-The application includes production-ready database profiles for **MySQL** and **PostgreSQL**.
-
-### Running with MySQL
+### MySQL
+To connect to MySQL, set environment variables and run with the `mysql` profile:
 
 ```bash
-# Set environment variables (or rely on defaults)
 export DB_HOST=localhost
 export DB_PORT=3306
 export DB_NAME=booking_db
 export DB_USER=root
 export DB_PASSWORD=root
 
-# Launch with MySQL profile
 mvn spring-boot:run -Dspring-boot.run.profiles=mysql
 ```
 
-### Running with PostgreSQL
+### PostgreSQL
+To connect to PostgreSQL, set environment variables and run with the `postgres` profile:
 
 ```bash
 export DB_HOST=localhost
@@ -120,7 +150,6 @@ export DB_NAME=booking_db
 export DB_USER=postgres
 export DB_PASSWORD=postgres
 
-# Launch with Postgres profile
 mvn spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
@@ -130,81 +159,87 @@ mvn spring-boot:run -Dspring-boot.run.profiles=postgres
 
 ### 1. Authentication (`/auth`)
 
-| Method | Endpoint | Description | Access |
+| Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/auth/login` | Authenticate with credentials and receive JWT Bearer token | Public |
-| `POST` | `/auth/register` | Register a new user account (ROLE_USER / ROLE_ADMIN) | Public |
-| `GET` | `/auth/me` | Retrieve profile information of currently authenticated user | Authenticated |
+| `POST` | `/auth/login` | Log in with username/email and password to get a JWT Bearer token | No |
+| `POST` | `/auth/register` | Register a new user (`ROLE_USER` or `ROLE_ADMIN`) | No |
+| `GET` | `/auth/me` | Retrieve profile of the currently authenticated user | Yes |
 
-### 2. Resource Management (`/resources`)
+### 2. Resources (`/resources`)
 
-| Method | Endpoint | Description | Access |
+| Method | Endpoint | Description | Allowed Roles |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/resources` | List resources with pagination, sorting &amp; type filtering | `USER`, `ADMIN` |
-| `GET` | `/resources/{id}` | Get resource details by ID | `USER`, `ADMIN` |
-| `POST` | `/resources` | Create a new resource | `ADMIN` only |
-| `PUT` | `/resources/{id}` | Update an existing resource | `ADMIN` only |
-| `DELETE` | `/resources/{id}` | Delete a resource | `ADMIN` only |
+| `GET` | `/resources` | List all resources with pagination, sorting, and type filter | `ROLE_USER`, `ROLE_ADMIN` |
+| `GET` | `/resources/{id}` | Get resource details by ID | `ROLE_USER`, `ROLE_ADMIN` |
+| `POST` | `/resources` | Create a new resource | `ROLE_ADMIN` only |
+| `PUT` | `/resources/{id}` | Update an existing resource | `ROLE_ADMIN` only |
+| `DELETE` | `/resources/{id}` | Delete a resource | `ROLE_ADMIN` only |
 
-### 3. Reservation Management (`/reservations`)
+### 3. Reservations (`/reservations`)
 
-| Method | Endpoint | Description | Access |
+| Method | Endpoint | Description | Allowed Roles |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/reservations` | Create reservation (user identity strictly inferred from JWT) | `USER`, `ADMIN` |
-| `GET` | `/reservations` | Filter reservations by `status`, `minPrice`, `maxPrice` (ADMIN sees all, USER sees only own) | `USER`, `ADMIN` |
-| `GET` | `/reservations/{id}` | Get reservation by ID | Owner or `ADMIN` |
-| `PUT` | `/reservations/{id}/status` | Update reservation status (`CANCELLED` for USER; any status for `ADMIN`) | Owner or `ADMIN` |
-| `DELETE` | `/reservations/{id}` | Delete reservation | Owner or `ADMIN` |
+| `POST` | `/reservations` | Create reservation (user identity derived from JWT token) | `ROLE_USER`, `ROLE_ADMIN` |
+| `GET` | `/reservations` | List reservations with status, minPrice, maxPrice filtering and pagination (Admins see all; Users see only own) | `ROLE_USER`, `ROLE_ADMIN` |
+| `GET` | `/reservations/{id}` | Get reservation details by ID | Owner or `ROLE_ADMIN` |
+| `PUT` | `/reservations/{id}/status` | Update status (`CANCELLED` for user; any status for admin) | Owner or `ROLE_ADMIN` |
+| `DELETE` | `/reservations/{id}` | Delete a reservation | Owner or `ROLE_ADMIN` |
 
 ---
 
-## Sample cURL Requests
+## Example Usage (cURL)
 
-### 1. Login to obtain JWT Token
-
+### 1. Login to obtain JWT token
 ```bash
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "user", "password": "User@123"}'
 ```
 
-### 2. Create Reservation (JWT Authentication)
+### 2. List available resources
+```bash
+curl -X GET "http://localhost:8080/resources?page=0&size=10&sort=name,asc" \
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
 
+### 3. Create a reservation
 ```bash
 curl -X POST http://localhost:8080/reservations \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
   -d '{
     "resourceId": 1,
-    "startTime": "2026-09-01T09:00:00",
-    "endTime": "2026-09-01T12:00:00",
-    "price": 300.00,
-    "notes": "Sprint planning meeting"
+    "startTime": "2026-09-10T09:00:00",
+    "endTime": "2026-09-10T12:00:00",
+    "notes": "Sprint planning session"
   }'
 ```
 
-### 3. Query Reservations with Filter &amp; Pagination
-
+### 4. Filter reservations by status and price
 ```bash
 curl -X GET "http://localhost:8080/reservations?status=CONFIRMED&minPrice=100.00&maxPrice=500.00&page=0&size=10&sort=createdAt,desc" \
-  -H "Authorization: Bearer <YOUR_JWT_TOKEN>"
+  -H "Authorization: Bearer <YOUR_TOKEN>"
+```
+
+### 5. Cancel a reservation
+```bash
+curl -X PUT http://localhost:8080/reservations/1/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -d '{"status": "CANCELLED"}'
 ```
 
 ---
 
 ## Postman Collection
 
-A complete Postman test suite is provided at:
-[`docs/Resource_Booking_API.postman_collection.json`](./docs/Resource_Booking_API.postman_collection.json)
+A ready-to-import Postman collection is available at:
+`docs/Resource_Booking_API.postman_collection.json`
 
-Import the collection into Postman, set the `baseUrl` variable to `http://localhost:8080`, and execute the pre-configured requests.
+It includes pre-configured requests for all endpoints with environment variable placeholders for tokens and base URL.
 
 ---
 
 ## License
 
-Released under the [MIT License](./LICENSE).
-
-<p align="center">
-  <img src="./assets/live-status.svg" width="100%" alt="Live Status Footer">
-</p>
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
