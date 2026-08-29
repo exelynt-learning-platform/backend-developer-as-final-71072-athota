@@ -10,6 +10,7 @@ import com.exelynt.booking.repository.ResourceRepository;
 import com.exelynt.booking.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,15 @@ public class DataInitializer implements CommandLineRunner {
     private final ResourceRepository resourceRepository;
     private final ReservationRepository reservationRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.seed.admin-password:Admin@123}")
+    private String adminPassword;
+
+    @Value("${app.seed.user-password:User@123}")
+    private String userPassword;
+
+    @Value("${app.seed.johndoe-password:Password@123}")
+    private String johnDoePassword;
 
     public DataInitializer(UserRepository userRepository,
                            ResourceRepository resourceRepository,
@@ -54,15 +64,15 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedUsers() {
         userRepository.findByUsername("admin").orElseGet(() ->
-                userRepository.save(new User("admin", "admin@booking.com", passwordEncoder.encode("Admin@123"), Role.ROLE_ADMIN))
+                userRepository.save(new User("admin", "admin@booking.com", passwordEncoder.encode(adminPassword), Role.ROLE_ADMIN))
         );
 
         userRepository.findByUsername("user").orElseGet(() ->
-                userRepository.save(new User("user", "user@booking.com", passwordEncoder.encode("User@123"), Role.ROLE_USER))
+                userRepository.save(new User("user", "user@booking.com", passwordEncoder.encode(userPassword), Role.ROLE_USER))
         );
 
         userRepository.findByUsername("johndoe").orElseGet(() ->
-                userRepository.save(new User("johndoe", "john@booking.com", passwordEncoder.encode("Password@123"), Role.ROLE_USER))
+                userRepository.save(new User("johndoe", "john@booking.com", passwordEncoder.encode(johnDoePassword), Role.ROLE_USER))
         );
     }
 
@@ -100,7 +110,7 @@ public class DataInitializer implements CommandLineRunner {
         ));
 
         resourceRepository.save(new Resource(
-                "VR Demo Station & Headset",
+                "VR Demo Station and Headset",
                 "Meta Quest Pro headset with spatial tracking and development workstation.",
                 "EQUIPMENT",
                 new BigDecimal("60.00"),

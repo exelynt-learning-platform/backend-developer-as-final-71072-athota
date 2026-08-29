@@ -32,6 +32,15 @@ public class ReservationAccessPolicy {
         }
     }
 
+    public void requireStatusUpdatePermission(Reservation reservation, UserPrincipal currentUser, com.exelynt.booking.entity.ReservationStatus targetStatus) {
+        if (!isAdmin(currentUser)) {
+            requireOwnerOrAdmin(reservation, currentUser, "update");
+            if (targetStatus != com.exelynt.booking.entity.ReservationStatus.CANCELLED) {
+                throw new com.exelynt.booking.exception.BadRequestException("Regular users can only set status to CANCELLED");
+            }
+        }
+    }
+
     public boolean isAdmin(UserPrincipal currentUser) {
         return currentUser.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals(Role.ROLE_ADMIN.name()));

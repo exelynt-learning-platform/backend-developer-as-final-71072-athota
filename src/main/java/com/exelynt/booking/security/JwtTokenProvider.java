@@ -30,6 +30,13 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration-ms}")
     private int jwtExpirationInMs;
 
+    @jakarta.annotation.PostConstruct
+    public void validateSecretConfiguration() {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty() || jwtSecret.length() < 32) {
+            throw new IllegalStateException("JWT secret must be configured with a minimum of 32 characters for HMAC-SHA256 security");
+        }
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);

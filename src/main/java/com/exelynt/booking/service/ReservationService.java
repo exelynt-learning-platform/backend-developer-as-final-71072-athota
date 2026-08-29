@@ -32,8 +32,7 @@ import java.util.List;
 @Service
 public class ReservationService {
 
-    private static final long ALLOWED_START_TIME_SKEW_MINUTES = 5;
-    private static final double MINUTES_PER_HOUR = 60.0;
+    private static final BigDecimal MINUTES_PER_HOUR = BigDecimal.valueOf(60);
 
     private final ReservationRepository reservationRepository;
     private final ResourceRepository resourceRepository;
@@ -112,14 +111,7 @@ public class ReservationService {
     @Transactional
     public ReservationResponse updateReservationStatus(Long id, ReservationStatusUpdateRequest request, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
-
-        if (!accessPolicy.isAdmin(currentUser)) {
-            accessPolicy.requireOwnerOrAdmin(reservation, currentUser, "update");
-            if (request.getStatus() != ReservationStatus.CANCELLED) {
-                throw new BadRequestException("Regular users can only set status to CANCELLED");
-            }
-        }
-
+        accessPolicy.requireStatusUpdatePermission(reservation, currentUser, request.getStatus());
         reservation.setStatus(request.getStatus());
         Reservation updated = reservationRepository.save(reservation);
         return ReservationResponse.fromEntity(updated);
@@ -136,7 +128,7 @@ public class ReservationService {
         if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
             throw new BadRequestException("Start time must be strictly before end time");
         }
-        if (startTime.isBefore(LocalDateTime.now().minusMinutes(ALLOWED_START_TIME_SKEW_MINUTES))) {
+        if (startTime.isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Reservation start time cannot be in the past");
         }
     }
@@ -153,12 +145,12 @@ public class ReservationService {
 
     /**
      * Calculates reservation price proportionally based on the resource rate and duration in minutes.
-     * Fractional hours are billed proportionally.
+     * Pure BigDecimal arithmetic is used throughout to eliminate precision loss.
      */
     private BigDecimal calculateReservationPrice(BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
         long minutes = Duration.between(start, end).toMinutes();
         BigDecimal hours = BigDecimal.valueOf(minutes)
-                .divide(BigDecimal.valueOf(MINUTES_PER_HOUR), 4, RoundingMode.HALF_UP);
+                .divide(MINUTES_PER_HOUR, 4, RoundingMode.HALF_UP);
         return pricePerUnit.multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
