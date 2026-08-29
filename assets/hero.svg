@@ -1,0 +1,115 @@
+<svg viewBox="0 0 1200 540" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Resource Booking RESTful API</title>
+  <desc id="desc">Production-grade Spring Boot Resource Booking System with JWT Authentication and Role-Based Access Control.</desc>
+  <style>
+    :root {
+      --panel: #f6f8fa;
+      --panel-2: #ffffff;
+      --ink: #0d1117;
+      --muted: #57606a;
+      --line: #d0d7de;
+      --accent: #0969da;
+      --accent-soft: #ddf4ff;
+      --good: #1a7f37;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --panel: #0d1117;
+        --panel-2: #161b22;
+        --ink: #f0f6fc;
+        --muted: #8b949e;
+        --line: #30363d;
+        --accent: #58a6ff;
+        --accent-soft: #0c2d4a;
+        --good: #3fb950;
+      }
+    }
+    .sans { font-family: Geist, "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+    .mono { font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace; }
+    .reveal { animation: reveal .8s cubic-bezier(.2,.7,.2,1) backwards; }
+    .r1 { animation-delay: .12s; }
+    .r2 { animation-delay: .28s; }
+    .r3 { animation-delay: .44s; }
+    .r4 { animation-delay: .62s; }
+    .draw { stroke-dasharray: 1; animation: draw 1.15s cubic-bezier(.55,0,.2,1) backwards; }
+    .wave { stroke-dasharray: 8 12; animation: wave 2.1s linear infinite; }
+    .halo { animation: halo 3.4s cubic-bezier(.2,.72,.2,1) infinite; transform-origin: 880px 270px; }
+    .brand { animation: brand 5.2s cubic-bezier(.32,.72,0,1) infinite; transform-origin: 880px 270px; }
+    .blink { animation: blink 2.4s ease-in-out infinite; }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes draw {
+      from { stroke-dashoffset: 1; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes wave { to { stroke-dashoffset: -40; } }
+    @keyframes halo {
+      0% { opacity: .34; transform: scale(.88); }
+      72%, 100% { opacity: 0; transform: scale(1.18); }
+    }
+    @keyframes brand {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .35; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, .draw, .wave, .halo, .brand, .blink { animation: none; }
+      .draw { stroke-dashoffset: 0; }
+      .halo { opacity: .15; }
+    }
+  </style>
+
+  <rect x="1" y="1" width="1198" height="538" rx="28" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <path d="M28 116H1172" stroke="var(--line)"/>
+  <path d="M28 458H1172" stroke="var(--line)"/>
+
+  <g class="reveal r1">
+    <circle cx="74" cy="64" r="5" fill="var(--good)" class="blink"/>
+    <text x="92" y="70" fill="var(--muted)" class="mono" font-size="15" letter-spacing="2.6">SPRING BOOT API ACTIVE</text>
+    <text x="790" y="70" fill="var(--muted)" class="mono" font-size="15" letter-spacing="2.2">REST · JWT · RBAC · JPA</text>
+    <rect x="1054" y="42" width="90" height="42" rx="21" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="1099" y="69" text-anchor="middle" fill="var(--accent)" class="mono" font-size="15" font-weight="700">v1.0</text>
+  </g>
+
+  <g class="reveal r2">
+    <text x="70" y="210" fill="var(--ink)" class="sans" font-size="64" font-weight="750" letter-spacing="-2.5">Resource Booking</text>
+    <text x="70" y="280" fill="var(--accent)" class="sans" font-size="46" font-weight="700" letter-spacing="-1.5">Secure RESTful API</text>
+  </g>
+
+  <g class="reveal r3">
+    <text x="74" y="337" fill="var(--muted)" class="sans" font-size="22">Spring Boot 3 · Java 17+ · JWT Auth · RBAC · MySQL / PostgreSQL</text>
+  </g>
+
+  <g class="reveal r4">
+    <rect x="72" y="374" width="175" height="42" rx="21" fill="var(--panel-2)" stroke="var(--line)"/>
+    <text x="160" y="401" text-anchor="middle" fill="var(--ink)" class="mono" font-size="13">JWT RBAC AUTH</text>
+    <rect x="261" y="374" width="187" height="42" rx="21" fill="var(--panel-2)" stroke="var(--line)"/>
+    <text x="355" y="401" text-anchor="middle" fill="var(--ink)" class="mono" font-size="13">DECIMAL PRICING</text>
+    <rect x="462" y="374" width="220" height="42" rx="21" fill="var(--panel-2)" stroke="var(--line)"/>
+    <text x="572" y="401" text-anchor="middle" fill="var(--ink)" class="mono" font-size="13">PAGINATION &amp; FILTER</text>
+  </g>
+
+  <g transform="translate(40 0)">
+    <circle class="halo" cx="880" cy="270" r="132" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="880" cy="270" r="123" fill="var(--accent-soft)" opacity=".25"/>
+
+    <g class="brand" transform="translate(800 200)">
+      <rect width="160" height="130" rx="16" fill="var(--panel-2)" stroke="var(--line)" stroke-width="2"/>
+      <rect x="20" y="24" width="120" height="12" rx="6" fill="var(--accent)"/>
+      <rect x="20" y="48" width="90" height="10" rx="5" fill="var(--line)"/>
+      <rect x="20" y="68" width="105" height="10" rx="5" fill="var(--line)"/>
+      <circle cx="30" cy="98" r="6" fill="var(--good)"/>
+      <text x="45" y="102" fill="var(--ink)" class="mono" font-size="11" font-weight="700">RBAC PASSED</text>
+    </g>
+  </g>
+
+  <g>
+    <text x="72" y="500" fill="var(--muted)" class="mono" font-size="13" letter-spacing="2">SWAGGER OPENAPI 3 · 100% UNIT TEST COVERAGE · DUAL DB PROFILES</text>
+    <path class="wave" d="M780 499C803 499 803 475 826 475C849 475 849 523 872 523C895 523 895 475 918 475C941 475 941 523 964 523C987 523 987 475 1010 475C1033 475 1033 499 1056 499H1138" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

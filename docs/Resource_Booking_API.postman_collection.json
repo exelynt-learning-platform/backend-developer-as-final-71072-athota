@@ -1,0 +1,296 @@
+{
+	"info": {
+		"_postman_id": "71072-resource-booking-api",
+		"name": "Resource Booking API (Exelynt Final Project)",
+		"description": "Comprehensive Postman collection covering Authentication, Resource Management (CRUD & RBAC), and Reservation Management with JWT verification, multi-criteria filtering, pagination, and sorting.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login as Admin (POST /auth/login)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login as User (POST /auth/login)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user\",\n    \"password\": \"User@123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Register New User (POST /auth/register)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newdeveloper\",\n    \"email\": \"newdeveloper@booking.com\",\n    \"password\": \"DevPassword@123\",\n    \"role\": \"ROLE_USER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User Info (GET /auth/me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "me"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Resources",
+			"item": [
+				{
+					"name": "List All Resources (GET /resources)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/resources?page=0&size=10&sort=name,asc",
+							"host": ["{{baseUrl}}"],
+							"path": ["resources"],
+							"query": [
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "10"},
+								{"key": "sort", "value": "name,asc"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Resource By ID (GET /resources/:id)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/resources/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["resources", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Resource (POST /resources - ADMIN)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Smart VR Workshop Lab\",\n    \"description\": \"High-performance workstation lab with spatial computing headsets.\",\n    \"type\": \"ROOM\",\n    \"pricePerUnit\": 120.00,\n    \"available\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/resources",
+							"host": ["{{baseUrl}}"],
+							"path": ["resources"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Reservations",
+			"item": [
+				{
+					"name": "Create Reservation (POST /reservations)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"resourceId\": 1,\n    \"startTime\": \"2026-09-01T09:00:00\",\n    \"endTime\": \"2026-09-01T12:00:00\",\n    \"price\": 450.00,\n    \"notes\": \"Architecture planning meeting\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reservations",
+							"host": ["{{baseUrl}}"],
+							"path": ["reservations"]
+						}
+					}
+				},
+				{
+					"name": "Filter Reservations (GET /reservations?status=CONFIRMED&minPrice=100)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/reservations?status=CONFIRMED&minPrice=100.00&maxPrice=1000.00&page=0&size=10&sort=createdAt,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["reservations"],
+							"query": [
+								{"key": "status", "value": "CONFIRMED"},
+								{"key": "minPrice", "value": "100.00"},
+								{"key": "maxPrice", "value": "1000.00"},
+								{"key": "page", "value": "0"},
+								{"key": "size", "value": "10"},
+								{"key": "sort", "value": "createdAt,desc"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Status / Cancel (PUT /reservations/:id/status)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{userToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"CANCELLED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reservations/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["reservations", "1", "status"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "authToken",
+			"value": ""
+		},
+		{
+			"key": "adminToken",
+			"value": ""
+		},
+		{
+			"key": "userToken",
+			"value": ""
+		}
+	]
+}
