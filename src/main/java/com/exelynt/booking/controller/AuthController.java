@@ -38,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new user account (ROLE_USER or ROLE_ADMIN)")
+    @Operation(summary = "Register a new standard user account (ROLE_USER only)")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         AuthResponse response = authService.register(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);

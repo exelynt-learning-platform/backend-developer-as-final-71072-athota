@@ -71,27 +71,21 @@ public class AuthService {
             throw new BadRequestException("Email '" + registerRequest.getEmail() + "' is already in use!");
         }
 
-        Role role = registerRequest.getRole() != null ? registerRequest.getRole() : Role.ROLE_USER;
-
         User user = new User(
                 registerRequest.getUsername(),
                 registerRequest.getEmail(),
                 passwordEncoder.encode(registerRequest.getPassword()),
-                role
+                Role.ROLE_USER
         );
 
         User savedUser = userRepository.save(user);
 
-        // Auto authenticate and issue JWT
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        registerRequest.getUsername(),
-                        registerRequest.getPassword()
-                )
-        );
-
+        UserPrincipal userPrincipal = UserPrincipal.create(savedUser);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userPrincipal, null, userPrincipal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
+        
+        String jwt = tokenProvider.generateTokenFromPrincipal(userPrincipal);
 
         return new AuthResponse(
                 jwt,

@@ -2,7 +2,6 @@ package com.exelynt.booking.controller;
 
 import com.exelynt.booking.dto.LoginRequest;
 import com.exelynt.booking.dto.RegisterRequest;
-import com.exelynt.booking.entity.Role;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,8 +72,7 @@ public class AuthControllerTest {
         RegisterRequest registerRequest = new RegisterRequest(
                 uniqueUser,
                 uniqueUser + "@test.com",
-                "Password123!",
-                Role.ROLE_USER
+                "Password123!"
         );
 
         mockMvc.perform(post("/auth/register")
