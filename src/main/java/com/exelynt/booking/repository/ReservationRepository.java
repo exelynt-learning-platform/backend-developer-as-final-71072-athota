@@ -17,6 +17,8 @@ import java.util.List;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
+    boolean existsByResource_Id(Long resourceId);
+
     @Query("SELECT r FROM Reservation r WHERE " +
            "(:user IS NULL OR r.user = :user) AND " +
            "(:status IS NULL OR r.status = :status) AND " +

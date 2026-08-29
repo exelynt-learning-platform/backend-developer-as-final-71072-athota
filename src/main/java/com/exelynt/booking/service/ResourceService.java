@@ -4,7 +4,9 @@ import com.exelynt.booking.dto.PageResponse;
 import com.exelynt.booking.dto.ResourceRequest;
 import com.exelynt.booking.dto.ResourceResponse;
 import com.exelynt.booking.entity.Resource;
+import com.exelynt.booking.exception.ResourceConflictException;
 import com.exelynt.booking.exception.ResourceNotFoundException;
+import com.exelynt.booking.repository.ReservationRepository;
 import com.exelynt.booking.repository.ResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,10 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
+    private final ReservationRepository reservationRepository;
 
     @Autowired
-    public ResourceService(ResourceRepository resourceRepository) {
+    public ResourceService(ResourceRepository resourceRepository, ReservationRepository reservationRepository) {
         this.resourceRepository = resourceRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +71,9 @@ public class ResourceService {
     @Transactional
     public void deleteResource(Long id) {
         Resource resource = findResourceOrThrow(id);
+        if (reservationRepository.existsByResource_Id(resource.getId())) {
+            throw new ResourceConflictException("Cannot delete resource with existing reservations");
+        }
         resourceRepository.delete(resource);
     }
 

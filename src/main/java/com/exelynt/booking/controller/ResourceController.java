@@ -60,7 +60,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Create a new bookable resource (ADMIN only)")
     public ResponseEntity<ResourceResponse> createResource(@Valid @RequestBody ResourceRequest request) {
         ResourceResponse response = resourceService.createResource(request);
@@ -68,7 +68,7 @@ public class ResourceController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Update an existing resource (ADMIN only)")
     public ResponseEntity<ResourceResponse> updateResource(@PathVariable Long id, @Valid @RequestBody ResourceRequest request) {
         ResourceResponse response = resourceService.updateResource(id, request);
@@ -76,7 +76,7 @@ public class ResourceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Delete a resource by ID (ADMIN only)")
     public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
         resourceService.deleteResource(id);

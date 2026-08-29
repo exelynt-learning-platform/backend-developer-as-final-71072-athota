@@ -31,6 +31,9 @@ spring:
         max-page-size: 100
 
 app:
+  cors:
+    # Comma-separated exact origins. Override with CORS_ALLOWED_ORIGINS in deployed environments.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   h2-console:
     enabled: false
   jwt:

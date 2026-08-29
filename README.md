@@ -130,6 +130,8 @@ Seed users and sample reservations are enabled only with the `dev` profile. They
 
 Pagination defaults to 10 items and is capped at 100 items per request to protect the API from oversized list queries.
 
+For browser clients, CORS accepts only exact origins from `CORS_ALLOWED_ORIGINS` (comma-separated). It defaults to `http://localhost:3000` for local development; set this to your deployed frontend URL(s), for example `https://app.example.com`.
+
 The test suite includes a PostgreSQL Testcontainers integration test for reservation-conflict queries. It runs automatically when Docker is available and is skipped locally when it is not.
 
 ---

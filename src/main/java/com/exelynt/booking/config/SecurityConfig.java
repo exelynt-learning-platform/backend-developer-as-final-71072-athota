@@ -25,7 +25,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -36,14 +35,17 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final SecurityErrorResponseWriter securityErrorResponseWriter;
     private final boolean h2ConsoleEnabled;
+    private final List<String> allowedOrigins;
 
     @Autowired
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           SecurityErrorResponseWriter securityErrorResponseWriter,
-                          @Value("${app.h2-console.enabled:false}") boolean h2ConsoleEnabled) {
+                          @Value("${app.h2-console.enabled:false}") boolean h2ConsoleEnabled,
+                          @Value("${app.cors.allowed-origins:http://localhost:3000}") List<String> allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.securityErrorResponseWriter = securityErrorResponseWriter;
         this.h2ConsoleEnabled = h2ConsoleEnabled;
+        this.allowedOrigins = List.copyOf(allowedOrigins);
     }
 
     @Bean
@@ -83,9 +85,9 @@ public class SecurityConfig {
                         auth.requestMatchers("/h2-console/**").permitAll();
                     }
                     auth.requestMatchers(HttpMethod.GET, "/resources/**").authenticated()
-                            .requestMatchers(HttpMethod.POST, "/resources/**").hasRole("ADMIN")
-                            .requestMatchers(HttpMethod.PUT, "/resources/**").hasRole("ADMIN")
-                            .requestMatchers(HttpMethod.DELETE, "/resources/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/resources/**").hasAuthority("ROLE_ADMIN")
+                            .requestMatchers(HttpMethod.PUT, "/resources/**").hasAuthority("ROLE_ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/resources/**").hasAuthority("ROLE_ADMIN")
                             .requestMatchers("/reservations/**").authenticated()
                             .anyRequest().authenticated();
                 });
@@ -98,9 +100,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:[*]", "https://*.exelynt.com", "http://127.0.0.1:[*]"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token", "Accept"));
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Auth-Token", "Accept"));
         configuration.setExposedHeaders(List.of("Authorization", "X-Auth-Token"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

@@ -104,4 +104,37 @@ public class ResourceControllerTest {
                 .andExpect(jsonPath("$.message").value("Access denied"))
                 .andExpect(jsonPath("$.path").value("/resources"));
     }
+
+    @Test
+    @DisplayName("DELETE /resources/{id} - Resource with reservations returns 409 Conflict")
+    void deleteResourceWithReservations_returnsConflict() throws Exception {
+        MvcResult reservationsResult = mockMvc.perform(get("/reservations")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        long resourceId = objectMapper.readTree(reservationsResult.getResponse().getContentAsString())
+                .path("content").get(0).path("resourceId").asLong();
+
+        mockMvc.perform(delete("/resources/{id}", resourceId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Cannot delete resource with existing reservations"));
+    }
+
+    @Test
+    @DisplayName("CORS only permits configured frontend origins")
+    void corsConfiguration_allowsOnlyConfiguredOrigins() throws Exception {
+        mockMvc.perform(options("/resources")
+                        .header("Origin", "http://localhost:3000")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"));
+
+        mockMvc.perform(options("/resources")
+                        .header("Origin", "https://untrusted.example")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isForbidden());
+    }
 }
