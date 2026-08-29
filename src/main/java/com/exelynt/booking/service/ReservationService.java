@@ -10,6 +10,7 @@ import com.exelynt.booking.entity.Resource;
 import com.exelynt.booking.entity.Role;
 import com.exelynt.booking.entity.User;
 import com.exelynt.booking.exception.BadRequestException;
+import com.exelynt.booking.exception.ForbiddenException;
 import com.exelynt.booking.exception.ResourceConflictException;
 import com.exelynt.booking.exception.ResourceNotFoundException;
 import com.exelynt.booking.exception.UnauthorizedException;
@@ -60,7 +61,10 @@ public class ReservationService {
         validateTimeWindow(request.getStartTime(), request.getEndTime());
         checkScheduleConflicts(resource.getId(), request.getStartTime(), request.getEndTime());
 
-        BigDecimal calculatedPrice = calculateReservationPrice(request.getPrice(), resource.getPricePerUnit(), request.getStartTime(), request.getEndTime());
+        BigDecimal calculatedPrice = calculateReservationPrice(
+                resource.getPricePerUnit(),
+                request.getStartTime(),
+                request.getEndTime());
 
         Reservation reservation = new Reservation(
                 user,
@@ -149,10 +153,7 @@ public class ReservationService {
         }
     }
 
-    private BigDecimal calculateReservationPrice(BigDecimal explicitPrice, BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
-        if (explicitPrice != null && explicitPrice.compareTo(BigDecimal.ZERO) > 0) {
-            return explicitPrice;
-        }
+    private BigDecimal calculateReservationPrice(BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
         long minutes = Duration.between(start, end).toMinutes();
         double hours = Math.max(1.0, (double) minutes / 60.0);
         return pricePerUnit.multiply(BigDecimal.valueOf(hours)).setScale(2, RoundingMode.HALF_UP);
@@ -165,7 +166,7 @@ public class ReservationService {
 
     private void validateOwnershipOrAdmin(Reservation reservation, UserPrincipal currentUser, String action) {
         if (!isAdmin(currentUser) && !reservation.getUser().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("Access denied: you can only " + action + " your own reservations");
+            throw new ForbiddenException("Access denied: you can only " + action + " your own reservations");
         }
     }
 

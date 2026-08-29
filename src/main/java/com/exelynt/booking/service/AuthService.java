@@ -50,7 +50,7 @@ public class AuthService {
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         User user = userRepository.findById(userPrincipal.getId())
-                .orElseThrow(() -> new BadRequestException("User record not found"));
+                .orElseThrow(() -> new IllegalStateException("User record not found for authenticated principal"));
 
         return new AuthResponse(
                 jwt,
