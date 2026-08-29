@@ -1,9 +1,11 @@
 package com.exelynt.booking.dto;
 
+import com.exelynt.booking.security.SecurityConstants;
+
 public class AuthResponse {
 
     private String token;
-    private String tokenType = "Bearer";
+    private String tokenType = SecurityConstants.TOKEN_TYPE;
     private Long userId;
     private String username;
     private String email;
@@ -14,7 +16,7 @@ public class AuthResponse {
 
     public AuthResponse(String token, Long userId, String username, String email, String role) {
         this.token = token;
-        this.tokenType = "Bearer";
+        this.tokenType = SecurityConstants.TOKEN_TYPE;
         this.userId = userId;
         this.username = username;
         this.email = email;

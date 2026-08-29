@@ -30,8 +30,12 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -48,23 +52,20 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)) // for H2 console
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // Resource endpoints RBAC
-                        .requestMatchers(HttpMethod.GET, "/resources/**").authenticated() // USER and ADMIN can read resources
-                        .requestMatchers(HttpMethod.POST, "/resources/**").hasRole("ADMIN") // Only ADMIN can create resources
-                        .requestMatchers(HttpMethod.PUT, "/resources/**").hasRole("ADMIN")  // Only ADMIN can update resources
-                        .requestMatchers(HttpMethod.DELETE, "/resources/**").hasRole("ADMIN") // Only ADMIN can delete resources
+                        .requestMatchers(HttpMethod.GET, "/resources/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/resources/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/resources/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/resources/**").hasRole("ADMIN")
 
-                        // Reservation endpoints RBAC
-                        .requestMatchers("/reservations/**").authenticated() // Handled with fine-grained RBAC in controller/service
+                        .requestMatchers("/reservations/**").authenticated()
 
                         .anyRequest().authenticated()
                 );
@@ -77,10 +78,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:[*]", "https://*.exelynt.com", "http://127.0.0.1:[*]"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token"));
-        configuration.setExposedHeaders(List.of("X-Auth-Token"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token", "Accept"));
+        configuration.setExposedHeaders(List.of("Authorization", "X-Auth-Token"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

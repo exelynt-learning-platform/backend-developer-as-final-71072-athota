@@ -1,8 +1,18 @@
 package com.exelynt.booking.service;
 
-import com.exelynt.booking.dto.*;
-import com.exelynt.booking.entity.*;
-import com.exelynt.booking.exception.*;
+import com.exelynt.booking.dto.PageResponse;
+import com.exelynt.booking.dto.ReservationRequest;
+import com.exelynt.booking.dto.ReservationResponse;
+import com.exelynt.booking.dto.ReservationStatusUpdateRequest;
+import com.exelynt.booking.entity.Reservation;
+import com.exelynt.booking.entity.ReservationStatus;
+import com.exelynt.booking.entity.Resource;
+import com.exelynt.booking.entity.Role;
+import com.exelynt.booking.entity.User;
+import com.exelynt.booking.exception.BadRequestException;
+import com.exelynt.booking.exception.ResourceConflictException;
+import com.exelynt.booking.exception.ResourceNotFoundException;
+import com.exelynt.booking.exception.UnauthorizedException;
 import com.exelynt.booking.repository.ReservationRepository;
 import com.exelynt.booking.repository.ResourceRepository;
 import com.exelynt.booking.repository.UserRepository;
@@ -37,7 +47,6 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request, UserPrincipal currentUser) {
-        // Enforce USER identity is strictly derived from JWT security context (currentUser)
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
 
@@ -48,35 +57,10 @@ public class ReservationService {
             throw new BadRequestException("Resource '" + resource.getName() + "' is currently unavailable for booking");
         }
 
-        // Validate time window
-        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().isEqual(request.getEndTime())) {
-            throw new BadRequestException("Start time must be strictly before end time");
-        }
+        validateTimeWindow(request.getStartTime(), request.getEndTime());
+        checkScheduleConflicts(resource.getId(), request.getStartTime(), request.getEndTime());
 
-        if (request.getStartTime().isBefore(LocalDateTime.now().minusMinutes(5))) {
-            throw new BadRequestException("Reservation start time cannot be in the past");
-        }
-
-        // Check for conflicting reservations on the same resource
-        List<Reservation> conflicts = reservationRepository.findConflictingReservations(
-                resource.getId(),
-                request.getStartTime(),
-                request.getEndTime()
-        );
-
-        if (!conflicts.isEmpty()) {
-            throw new ResourceConflictException("Resource is already booked during the requested time interval");
-        }
-
-        // Compute price if not explicitly provided
-        BigDecimal calculatedPrice = request.getPrice();
-        if (calculatedPrice == null || calculatedPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            long minutes = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes();
-            double hours = Math.max(1.0, (double) minutes / 60.0);
-            calculatedPrice = resource.getPricePerUnit()
-                    .multiply(BigDecimal.valueOf(hours))
-                    .setScale(2, RoundingMode.HALF_UP);
-        }
+        BigDecimal calculatedPrice = calculateReservationPrice(request.getPrice(), resource.getPricePerUnit(), request.getStartTime(), request.getEndTime());
 
         Reservation reservation = new Reservation(
                 user,
@@ -101,12 +85,7 @@ public class ReservationService {
             UserPrincipal currentUser) {
 
         User userFilter = null;
-
-        // If regular user, filter only their own reservations
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
-
-        if (!isAdmin) {
+        if (!isAdmin(currentUser)) {
             userFilter = userRepository.findById(currentUser.getId())
                     .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
         }
@@ -125,14 +104,7 @@ public class ReservationService {
     @Transactional(readOnly = true)
     public ReservationResponse getReservationById(Long id, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
-
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
-
-        if (!isAdmin && !reservation.getUser().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("Access denied: you can only view your own reservations");
-        }
-
+        validateOwnershipOrAdmin(reservation, currentUser, "view");
         return ReservationResponse.fromEntity(reservation);
     }
 
@@ -140,14 +112,8 @@ public class ReservationService {
     public ReservationResponse updateReservationStatus(Long id, ReservationStatusUpdateRequest request, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
 
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
-
-        // Users can only cancel their own reservations; Admins can set any status
-        if (!isAdmin) {
-            if (!reservation.getUser().getId().equals(currentUser.getId())) {
-                throw new UnauthorizedException("Access denied: you can only update your own reservations");
-            }
+        if (!isAdmin(currentUser)) {
+            validateOwnershipOrAdmin(reservation, currentUser, "update");
             if (request.getStatus() != ReservationStatus.CANCELLED) {
                 throw new BadRequestException("Regular users can only set status to CANCELLED");
             }
@@ -161,15 +127,46 @@ public class ReservationService {
     @Transactional
     public void deleteReservation(Long id, UserPrincipal currentUser) {
         Reservation reservation = findReservationOrThrow(id);
-
-        boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
-
-        if (!isAdmin && !reservation.getUser().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("Access denied: you can only delete your own reservations");
-        }
-
+        validateOwnershipOrAdmin(reservation, currentUser, "delete");
         reservationRepository.delete(reservation);
+    }
+
+    private void validateTimeWindow(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
+            throw new BadRequestException("Start time must be strictly before end time");
+        }
+        if (startTime.isBefore(LocalDateTime.now().minusMinutes(5))) {
+            throw new BadRequestException("Reservation start time cannot be in the past");
+        }
+    }
+
+    private void checkScheduleConflicts(Long resourceId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Reservation> conflicts = reservationRepository.findConflictingReservations(
+                resourceId, startTime, endTime);
+
+        if (!conflicts.isEmpty()) {
+            throw new ResourceConflictException("Resource is already booked during the requested time interval");
+        }
+    }
+
+    private BigDecimal calculateReservationPrice(BigDecimal explicitPrice, BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
+        if (explicitPrice != null && explicitPrice.compareTo(BigDecimal.ZERO) > 0) {
+            return explicitPrice;
+        }
+        long minutes = Duration.between(start, end).toMinutes();
+        double hours = Math.max(1.0, (double) minutes / 60.0);
+        return pricePerUnit.multiply(BigDecimal.valueOf(hours)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private boolean isAdmin(UserPrincipal user) {
+        return user.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_ADMIN.name()));
+    }
+
+    private void validateOwnershipOrAdmin(Reservation reservation, UserPrincipal currentUser, String action) {
+        if (!isAdmin(currentUser) && !reservation.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("Access denied: you can only " + action + " your own reservations");
+        }
     }
 
     private Reservation findReservationOrThrow(Long id) {
