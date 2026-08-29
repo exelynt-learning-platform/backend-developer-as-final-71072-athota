@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,6 +71,24 @@ public class AuthControllerTest {
     void testCurrentUserRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /auth/me - Returns a safe profile without credentials")
+    void testCurrentUserProfileDoesNotExposePassword() throws Exception {
+        MvcResult login = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("user", "User@123"))))
+                .andReturn();
+        String token = objectMapper.readTree(login.getResponse().getContentAsString()).get("token").asText();
+
+        mockMvc.perform(get("/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.username").value("user"))
+                .andExpect(jsonPath("$.email").value("user@booking.com"))
+                .andExpect(jsonPath("$.role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.password").doesNotExist());
     }
 
 }

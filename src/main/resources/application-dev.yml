@@ -4,5 +4,7 @@ spring:
       enabled: true
 
 app:
+  seed:
+    enabled: true
   h2-console:
     enabled: true

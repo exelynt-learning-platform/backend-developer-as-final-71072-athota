@@ -32,6 +32,9 @@ import java.util.List;
 @Service
 public class ReservationService {
 
+    private static final long ALLOWED_START_TIME_SKEW_MINUTES = 5;
+    private static final double MINUTES_PER_HOUR = 60.0;
+
     private final ReservationRepository reservationRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
@@ -133,7 +136,7 @@ public class ReservationService {
         if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
             throw new BadRequestException("Start time must be strictly before end time");
         }
-        if (startTime.isBefore(LocalDateTime.now().minusMinutes(5))) {
+        if (startTime.isBefore(LocalDateTime.now().minusMinutes(ALLOWED_START_TIME_SKEW_MINUTES))) {
             throw new BadRequestException("Reservation start time cannot be in the past");
         }
     }
@@ -149,7 +152,7 @@ public class ReservationService {
 
     private BigDecimal calculateReservationPrice(BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
         long minutes = Duration.between(start, end).toMinutes();
-        double hours = Math.max(1.0, (double) minutes / 60.0);
+        double hours = Math.max(1.0, minutes / MINUTES_PER_HOUR);
         return pricePerUnit.multiply(BigDecimal.valueOf(hours)).setScale(2, RoundingMode.HALF_UP);
     }
 

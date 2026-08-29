@@ -10,6 +10,7 @@ The system allows users to view available resources (e.g., meeting rooms, compan
 
 ### Key Features
 - **JWT-Based Authentication**: Stateless authentication with bearer tokens via `POST /auth/login`.
+- **Bearer-Only API Security**: Authentication is accepted through the `Authorization: Bearer <token>` header; cookies are not used for authentication.
 - **Role-Based Access Control (RBAC)**: Distinct permissions for `ROLE_ADMIN` and `ROLE_USER`.
 - **User Identity Isolation**: User identity is extracted directly from the verified JWT security context, preventing client-side spoofing.
 - **Resource Management**: Admins have full CRUD access; regular users have read-only access.
@@ -124,6 +125,8 @@ Once started, the application will be accessible at `http://localhost:8080`.
   - JDBC URL: `jdbc:h2:mem:bookingdb`
   - Username: `sa`
   - Password: *(leave blank)*
+
+Seed users and sample reservations are enabled only with the `dev` profile. They remain disabled for MySQL and PostgreSQL deployments unless `APP_SEED_ENABLED=true` is explicitly set.
 
 ---
 

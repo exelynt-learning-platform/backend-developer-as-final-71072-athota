@@ -2,6 +2,7 @@ package com.exelynt.booking.controller;
 
 import com.exelynt.booking.dto.AuthResponse;
 import com.exelynt.booking.dto.LoginRequest;
+import com.exelynt.booking.dto.UserProfileResponse;
 import com.exelynt.booking.security.UserPrincipal;
 import com.exelynt.booking.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,7 +39,7 @@ public class AuthController {
 
     @GetMapping("/me")
     @Operation(summary = "Get details of currently authenticated user from JWT")
-    public ResponseEntity<UserPrincipal> getCurrentUser(@AuthenticationPrincipal UserPrincipal currentUser) {
-        return ResponseEntity.ok(currentUser);
+    public ResponseEntity<UserProfileResponse> getCurrentUser(@AuthenticationPrincipal UserPrincipal currentUser) {
+        return ResponseEntity.ok(UserProfileResponse.fromPrincipal(currentUser));
     }
 }

@@ -56,6 +56,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
+                // Authentication is stateless and accepted only through bearer headers, never cookies.
+                // CSRF tokens protect browser cookie sessions, so they do not apply to this API.
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> {
                     if (h2ConsoleEnabled) {
