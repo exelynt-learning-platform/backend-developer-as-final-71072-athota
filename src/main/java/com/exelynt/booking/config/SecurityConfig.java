@@ -2,6 +2,9 @@ package com.exelynt.booking.config;
 
 import com.exelynt.booking.security.JwtAuthenticationFilter;
 import com.exelynt.booking.security.SecurityErrorResponseWriter;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,13 +17,13 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,6 +34,8 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final SecurityErrorResponseWriter securityErrorResponseWriter;
@@ -60,11 +65,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        logger.info("CSRF protection is enabled for non-bearer state-changing requests");
         http
                 .cors(Customizer.withDefaults())
-                // Authentication is stateless and accepted only through bearer headers, never cookies.
-                // CSRF tokens protect browser cookie sessions, so they do not apply to this API.
-                .csrf(AbstractHttpConfigurer::disable)
+                // Bearer tokens are supplied explicitly in Authorization headers, not cookies.
+                // Keep CSRF enabled for all future cookie/session-authenticated endpoints; only the
+                // bearer API, login, CORS preflight, and optional development H2 console are ignored.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers(this::isCsrfExemptRequest))
                 .headers(headers -> {
                     if (h2ConsoleEnabled) {
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
@@ -95,6 +104,15 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private boolean isCsrfExemptRequest(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        String authorization = request.getHeader("Authorization");
+        return HttpMethod.OPTIONS.matches(request.getMethod())
+                || "/auth/login".equals(requestUri)
+                || authorization != null && authorization.startsWith("Bearer ")
+                || h2ConsoleEnabled && requestUri.startsWith("/h2-console/");
     }
 
     @Bean

@@ -34,6 +34,7 @@ public class ReservationService {
 
     private static final long ALLOWED_START_TIME_SKEW_MINUTES = 5;
     private static final double MINUTES_PER_HOUR = 60.0;
+    private static final double MINIMUM_HOURS = 1.0;
 
     private final ReservationRepository reservationRepository;
     private final ResourceRepository resourceRepository;
@@ -142,8 +143,9 @@ public class ReservationService {
     }
 
     private void checkScheduleConflicts(Long resourceId, LocalDateTime startTime, LocalDateTime endTime) {
-        List<Reservation> conflicts = reservationRepository.findConflictingReservations(
-                resourceId, startTime, endTime);
+        List<Reservation> conflicts = reservationRepository
+                .findByResource_IdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                        resourceId, ReservationStatus.CANCELLED, endTime, startTime);
 
         if (!conflicts.isEmpty()) {
             throw new ResourceConflictException("Resource is already booked during the requested time interval");
@@ -152,7 +154,7 @@ public class ReservationService {
 
     private BigDecimal calculateReservationPrice(BigDecimal pricePerUnit, LocalDateTime start, LocalDateTime end) {
         long minutes = Duration.between(start, end).toMinutes();
-        double hours = Math.max(1.0, minutes / MINUTES_PER_HOUR);
+        double hours = Math.max(MINIMUM_HOURS, minutes / MINUTES_PER_HOUR);
         return pricePerUnit.multiply(BigDecimal.valueOf(hours)).setScale(2, RoundingMode.HALF_UP);
     }
 

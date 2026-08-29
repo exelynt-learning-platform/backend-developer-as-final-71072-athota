@@ -20,6 +20,10 @@ import java.time.LocalDateTime;
 
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
+/**
+ * Development/test seed data. Spring does not create this bean when app.seed.enabled is false,
+ * so production startup performs no seed-data reads or writes.
+ */
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);

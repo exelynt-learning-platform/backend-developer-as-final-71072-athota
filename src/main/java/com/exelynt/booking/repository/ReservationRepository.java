@@ -32,12 +32,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             Pageable pageable
     );
 
-    @Query("SELECT r FROM Reservation r WHERE r.resource.id = :resourceId AND " +
-           "r.status <> 'CANCELLED' AND " +
-           "((r.startTime < :endTime AND r.endTime > :startTime))")
-    List<Reservation> findConflictingReservations(
-            @Param("resourceId") Long resourceId,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-    );
+    List<Reservation> findByResource_IdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long resourceId,
+            ReservationStatus excludedStatus,
+            LocalDateTime endTime,
+            LocalDateTime startTime);
 }

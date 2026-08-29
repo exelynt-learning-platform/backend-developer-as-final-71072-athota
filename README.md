@@ -11,6 +11,7 @@ The system allows users to view available resources (e.g., meeting rooms, compan
 ### Key Features
 - **JWT-Based Authentication**: Stateless authentication with bearer tokens via `POST /auth/login`.
 - **Bearer-Only API Security**: Authentication is accepted through the `Authorization: Bearer <token>` header; cookies are not used for authentication.
+- **CSRF Defence in Depth**: CSRF remains enabled for non-bearer state-changing requests, protecting any future cookie/session endpoint; authenticated bearer API requests and login are explicitly exempt.
 - **Role-Based Access Control (RBAC)**: Distinct permissions for `ROLE_ADMIN` and `ROLE_USER`.
 - **User Identity Isolation**: User identity is extracted directly from the verified JWT security context, preventing client-side spoofing.
 - **Resource Management**: Admins have full CRUD access; regular users have read-only access.

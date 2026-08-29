@@ -137,4 +137,16 @@ public class ResourceControllerTest {
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("CSRF protects non-bearer state-changing requests")
+    void createResourceWithoutBearerToken_isRejectedByCsrfProtection() throws Exception {
+        ResourceRequest request = new ResourceRequest(
+                "CSRF test room", "Request without bearer authentication", "ROOM", new BigDecimal("50.00"), true);
+
+        mockMvc.perform(post("/resources")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
 }

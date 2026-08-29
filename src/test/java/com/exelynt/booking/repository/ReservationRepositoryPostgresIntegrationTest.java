@@ -56,7 +56,7 @@ class ReservationRepositoryPostgresIntegrationTest {
     }
 
     @Test
-    void findConflictingReservations_whenActiveReservationOverlaps_returnsIt() {
+    void findByResourceAndTimeWindow_whenActiveReservationOverlaps_returnsIt() {
         User user = userRepository.save(new User(
                 "postgres-user", "postgres-user@example.com", "encoded-password", Role.ROLE_USER));
         Resource resource = resourceRepository.save(new Resource(
@@ -66,8 +66,8 @@ class ReservationRepositoryPostgresIntegrationTest {
         reservationRepository.save(new Reservation(
                 user, resource, start, end, new BigDecimal("100.00"), ReservationStatus.CONFIRMED, "integration test"));
 
-        assertThat(reservationRepository.findConflictingReservations(
-                resource.getId(), start.plusMinutes(30), end.plusMinutes(30)))
+        assertThat(reservationRepository.findByResource_IdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                resource.getId(), ReservationStatus.CANCELLED, end.plusMinutes(30), start.plusMinutes(30)))
                 .hasSize(1);
     }
 }
